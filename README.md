@@ -8,7 +8,7 @@ A PHP abstraction library for JavaScript charting built as a Symfony 2 service b
 The following libraries are currently bundled with this Symfony bundle, feel free to update
 the libraries yourself - they reside in Resources/public/js.
 
-* Jquery 1.6.4
+* Jquery 1.8.3
 * Flot 0.7
 * jqPlot 1.0.0 revision 1095
 
