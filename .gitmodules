@@ -4,3 +4,6 @@
 [submodule "Resources/public/js/jqplot"]
 	path = Resources/public/js/jqplot
 	url = git://github.com/jonmchan/jqplot.git
+[submodule "Resources/public/js/flot-bubbles"]
+	path = Resources/public/js/flot-bubbles
+	url = git://github.com/ubermajestix/flot-plugins.git
