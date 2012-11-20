@@ -1,0 +1,6 @@
+[submodule "Resources/public/js/flot"]
+	path = Resources/public/js/flot
+	url = git://github.com/flot/flot.git
+[submodule "Resources/public/js/jqplot"]
+	path = Resources/public/js/jqplot
+	url = git://github.com/jonmchan/jqplot.git
