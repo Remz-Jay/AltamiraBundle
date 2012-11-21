@@ -85,7 +85,7 @@ Getting Started
 Troubleshooting
 ==================
 
-If there are javascript files missing when you view the example, the JS dependencies may not have been fetched properly. Check that the folders in Resources/public/js/ are not empty.
+If there are javascript files missing when you view the example, the JS dependencies may not have been fetched properly. Check that the folders in ```Resources/public/js/``` are not empty.
 
 If code exists there, you may run one of the commands in the wrong order and were not able to generate the assets. Run the following:
 
