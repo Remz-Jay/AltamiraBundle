@@ -44,6 +44,9 @@ class ScriptHandler
             chdir($dir);
             die("Running git submodule sync failed with $status\n");
         }
+        exec('git submodule foreach git reset --hard', $output, $status);
+        exec('git submodule foreach git clean -df', $output, $status);
+
         exec('git submodule update --init --recursive', $output, $status);
         chdir($dir);
         if ($status) {
@@ -85,9 +88,10 @@ class ScriptHandler
         }
 
         chdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."libs".DIRECTORY_SEPARATOR."flot-bubbles");
+        mkdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot-bubbles",0777,true);
 
         exec("java -jar ..".DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."extras".DIRECTORY_SEPARATOR."yuicompressor-2.4.2.jar $file -o "
-            .__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot".DIRECTORY_SEPARATOR.substr("jquery.flot.bubble.js",0,-2)."min.js");
+            .__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot-bubbles".DIRECTORY_SEPARATOR.substr("jquery.flot.bubble.js",0,-2)."min.js");
 
         chdir($dir);
     }
