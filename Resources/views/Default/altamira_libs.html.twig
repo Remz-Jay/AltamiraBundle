@@ -8,6 +8,6 @@
 {% endfor %}
 
 
-{% if altamiraCSS is not null %}
+{% if altamiraCSS is not empty %}
 <link rel='stylesheet' type='text/css' href='{{asset('bundles/malwarebytesaltamira/' ~ altamiraCSS)}}'></link>
 {% endif %}
