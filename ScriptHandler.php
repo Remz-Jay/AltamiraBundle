@@ -33,62 +33,22 @@ namespace Malwarebytes\AltamiraBundle;
  */
 class ScriptHandler
 {
-    public static function fetchDependencies($event) {
-/*        chdir(__DIR__);
-
-        echo getcwd(), "\n";
-        $finder = new \Symfony\Component\Process\ExecutableFinder();
-        $gitBin = $finder->find('git');
-        $escapedgitBin=escapeshellarg($gitBin);
-        $command=$escapedgitBin." submodule init";
-        //echo "$escapedgitBin submodule init && $escapedgitBin submodule foreach $escapedgitBin reset --hard && $escapedgitBin submodule foreach $escapedgitBin pull && $escapedgitBin submodule update 2>&1";
-        $cmd=new \Symfony\Component\Process\Process($command,__DIR__);
-        $cmd->setTimeout(60000);
-        $cmd->run(function ($type, $buffer) {
-            if ('err' === $type) {
-                echo 'ERR > '.$buffer;
-            } else {
-                echo 'OUT > '.$buffer;
-            }
-        });
-        var_dump($cmd->getOutput());
-        echo "Error Code: ",$cmd->getExitCode(),"\n";
-
-        if ($cmd->isSuccessful()) {
-            echo "worked";
-        }
-        $cmd=new \Symfony\Component\Process\Process(sprintf('%s submodule update 2>&1', escapeshellarg($gitBin)),__DIR__);
-        $cmd->setTimeout(60000);
-        $cmd->run();
-        echo $cmd->getOutput();
-        echo $cmd->getErrorOutput();
-
-        if ($cmd->isSuccessful()) {
-            echo "worked";
-        }
-
-
-        if(system("git submodule init") === false || system("git submodule update") === false ) {
-            echo "Error occurred while trying to setup altamira bundle submodules.\n";
-        }
-        echo "hello world\n";*/
-
-
-
-            $status = null;
-            $output = array();
-            $dir = getcwd();
-            chdir(__DIR__);
-            exec('git submodule sync', $output, $status);
-            if ($status) {
-                chdir($dir);
-                die("Running git submodule sync failed with $status\n");
-            }
-            exec('git submodule update --init --recursive', $output, $status);
+    public static function installJSDependencies($event) {
+        echo "Installing JS Library dependencies for the AltamiraBundle";
+        $status = null;
+        $output = array();
+        $dir = getcwd();
+        chdir(__DIR__);
+        exec('git submodule sync', $output, $status);
+        if ($status) {
             chdir($dir);
-            if ($status) {
-                die("Running git submodule --init --recursive failed with $status\n");
-            }
+            die("Running git submodule sync failed with $status\n");
+        }
+        exec('git submodule update --init --recursive', $output, $status);
+        chdir($dir);
+        if ($status) {
+            die("Running git submodule --init --recursive failed with $status\n");
+        }
 
     }
 }
