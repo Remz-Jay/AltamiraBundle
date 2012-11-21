@@ -34,7 +34,7 @@ namespace Malwarebytes\AltamiraBundle;
 class ScriptHandler
 {
     public static function installJSDependencies($event) {
-        echo "Installing JS Library dependencies for the AltamiraBundle";
+        echo "Installing JS Library dependencies for the AltamiraBundle\n";
         $status = null;
         $output = array();
         $dir = getcwd();
@@ -50,5 +50,75 @@ class ScriptHandler
             die("Running git submodule --init --recursive failed with $status\n");
         }
 
+        chdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."libs".DIRECTORY_SEPARATOR."jqplot");
+
+        echo "Compiling jqplot\n";
+        exec('ant clean min', $output, $status);
+        if ($status) {
+            die("Ant failed with $status (is ant installed?)\n");
+        }
+
+        if (is_dir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js")) {
+            rrmdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js");
+        }
+
+        mkdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."jqplot",0777,true);
+
+        $source = __DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."libs".DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."dist";
+        $dest= __DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."jqplot";
+
+        recursiveAssetsOnlyCopy($source,$dest);
+
+
+        echo "Compiling flot\n";
+
+        chdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."libs".DIRECTORY_SEPARATOR."flot");
+        if (($files = scandir(".")) ===false ) {
+            die("failed to traverse through flot directory");
+        }
+        mkdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot",0777,true);
+        foreach ($files as $file) {
+            if (substr($file,-3) == ".js") {
+                exec("java -jar ..".DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."extras".DIRECTORY_SEPARATOR."yuicompressor-2.4.2.jar $file -o "
+                    .__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js");
+            }
+        }
+
+        chdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."libs".DIRECTORY_SEPARATOR."flot-bubbles");
+
+        exec("java -jar ..".DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."extras".DIRECTORY_SEPARATOR."yuicompressor-2.4.2.jar $file -o "
+            .__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot".DIRECTORY_SEPARATOR.substr("jquery.flot.bubble.js",0,-2)."min.js");
+
+        chdir($dir);
+    }
+}
+
+
+function rrmdir($dir) {
+    if (is_dir($dir)) {
+        $objects = scandir($dir);
+        foreach ($objects as $object) {
+            if ($object != "." && $object != "..") {
+                if (filetype($dir."/".$object) == "dir") rrmdir($dir."/".$object); else unlink($dir."/".$object);
+            }
+        }
+        reset($objects);
+        rmdir($dir);
+    }
+}
+
+function recursiveAssetsOnlyCopy($source,$dest) {
+    foreach (
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST) as $item
+    ) {
+        if ($item->isDir()) {
+            mkdir($dest . DIRECTORY_SEPARATOR . $iterator->getSubPathName());
+        } else {
+            if (substr($item,-3) == ".js" || substr($item,-3) == "css") {
+                copy($item, $dest . DIRECTORY_SEPARATOR . $iterator->getSubPathName());
+            }
+        }
     }
 }
