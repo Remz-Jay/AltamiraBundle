@@ -33,8 +33,86 @@ namespace Malwarebytes\AltamiraBundle;
  */
 class ScriptHandler
 {
+
+    // Must use function because no constructor to properly initialize property
+    // http://stackoverflow.com/questions/5847905/cannot-use-concatenation-when-declaring-default-class-properties-in-php
+    static private function getJSDir() {
+        return __DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js";
+    }
+    static private function getLibsDir() {
+        return __DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."libs";
+    }
+    static private function getYUIBin() {
+        return "java -jar ".escapeshellarg(static::getLibsDir().DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."extras".DIRECTORY_SEPARATOR."yuicompressor-2.4.2.jar");
+    }
+
+
+    // if this gets any bigger, break it up into separate methods
     public static function installJSDependencies($event) {
         echo "Installing JS Library dependencies for the AltamiraBundle\n";
+        $dir = getcwd();
+
+        ScriptHandler::gitSubmodulesUpdate();
+        ScriptHandler::cleanPublicJSDir();
+
+
+        echo "Compiling jqplot\n";
+        chdir(static::getLibsDir().DIRECTORY_SEPARATOR."jqplot");
+        exec('ant clean min', $output, $status);
+        if ($status) {
+            die("Ant failed with $status (is ant installed?)\n");
+        }
+        chdir($dir);
+
+        echo "Compiling flot\n";
+        $flotLib=static::getLibsDir() .DIRECTORY_SEPARATOR."flot";
+        if (($files = scandir($flotLib)) ===false ) {
+            die("failed to traverse through flot directory");
+        }
+        foreach ($files as $file) {
+            if (substr($file,-3) == ".js") {
+                exec(static::getYUIBin(). " ".escapeshellarg($flotLib.DIRECTORY_SEPARATOR.$file)." -o "
+                    .escapeshellarg(static::getLibsDir().DIRECTORY_SEPARATOR."flot".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js"));
+            }
+        }
+
+        echo "Compiling flot bubbles\n";
+        $flotBubblesLib=static::getLibsDir() .DIRECTORY_SEPARATOR."flot-bubbles";
+        if (($files = scandir($flotBubblesLib)) ===false ) {
+            die("failed to traverse through flot bubbles directory");
+        }
+
+        foreach ($files as $file) {
+            if (substr($file,-3) == ".js") {
+                // minification did not work out, so commented min code.
+                // exec(static::getYUIBin(). " ".escapeshellarg($flotBubblesLib.DIRECTORY_SEPARATOR.$file) ." -o "
+                //    .escapeshellarg(static::getLibsDir().DIRECTORY_SEPARATOR."flot-bubbles".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js"));
+
+                // straight copy to min.js for compatibility with min setting in altamira
+                copy($flotBubblesLib.DIRECTORY_SEPARATOR.$file,static::getLibsDir().DIRECTORY_SEPARATOR."flot-bubbles".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js");
+            }
+        }
+
+        echo "Installing jqplot\n";
+        mkdir(static::getJSDir().DIRECTORY_SEPARATOR."jqplot",0777,true);
+        $source = static::getLibsDir().DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."dist";
+        $dest= static::getJSDir().DIRECTORY_SEPARATOR."jqplot";
+        recursiveAssetsOnlyCopy($source,$dest);
+
+
+
+        echo "Installing flot\n";
+        mkdir(static::getJSDir().DIRECTORY_SEPARATOR."flot",0777,true);
+        recursiveAssetsOnlyCopy(static::getLibsDir().DIRECTORY_SEPARATOR."flot",static::getJSDir().DIRECTORY_SEPARATOR."flot");
+
+
+        echo "Installing flot-bubbles\n";
+        mkdir(static::getJSDir().DIRECTORY_SEPARATOR."flot-bubbles",0777,true);
+        recursiveAssetsOnlyCopy(static::getLibsDir().DIRECTORY_SEPARATOR."flot-bubbles",static::getJSDir().DIRECTORY_SEPARATOR."flot-bubbles");
+    }
+
+    public static function gitSubmodulesUpdate() {
+        echo "Pulling latest submodule repositories from git\n";
         $status = null;
         $output = array();
         $dir = getcwd();
@@ -52,72 +130,13 @@ class ScriptHandler
         if ($status) {
             die("Running git submodule --init --recursive failed with $status\n");
         }
+    }
 
-        chdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."libs".DIRECTORY_SEPARATOR."jqplot");
-
-        echo "Compiling jqplot\n";
-        exec('ant clean min', $output, $status);
-        if ($status) {
-            die("Ant failed with $status (is ant installed?)\n");
+    public static function cleanPublicJSDir() {
+        echo "Clearing (possibly) stale js assets from public resource folder\n";
+        if (is_dir(static::getJSDir())) {
+            rrmdir(static::getJSDir());
         }
-
-        if (is_dir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js")) {
-            rrmdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js");
-        }
-
-        mkdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."jqplot",0777,true);
-
-        $source = __DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."libs".DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."dist";
-        $dest= __DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."jqplot";
-
-        recursiveAssetsOnlyCopy($source,$dest);
-
-
-        echo "Compiling flot\n";
-
-        chdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."libs".DIRECTORY_SEPARATOR."flot");
-        if (($files = scandir(".")) ===false ) {
-            die("failed to traverse through flot directory");
-        }
-        mkdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot",0777,true);
-
-
-        recursiveAssetsOnlyCopy(getcwd(),__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot");
-        // enable this to use flot minified code.
-        foreach ($files as $file) {
-            if (substr($file,-3) == ".js") {
-                // minification did not work out, so commented min code.
-                exec("java -jar ..".DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."extras".DIRECTORY_SEPARATOR."yuicompressor-2.4.2.jar --disable-optimizations $file -o "
-                    .__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js");
-                
-
-                // straight copy to min.js for compatibility with min setting in altamira
-                //copy($file,__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js");
-            }
-        }
-
-        echo "Compiling flot bubbles\n";
-
-        chdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."libs".DIRECTORY_SEPARATOR."flot-bubbles");
-        if (($files = scandir(".")) ===false ) {
-            die("failed to traverse through flot bubbles directory");
-        }
-        mkdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot-bubbles",0777,true);
-
-        recursiveAssetsOnlyCopy(getcwd(),__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot-bubbles");
-
-
-        foreach ($files as $file) {
-            if (substr($file,-3) == ".js") {
-                // minification did not work out, so commented min code.
-                //exec("java -jar ..".DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."extras".DIRECTORY_SEPARATOR."yuicompressor-2.4.2.jar $file -o "
-                //    .__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot-bubbles".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js");
-
-                // straight copy to min.js for compatibility with min setting in altamira
-                copy($file,__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot-bubbles".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js");
-            }
-        }
-        chdir($dir);
     }
 }
 
