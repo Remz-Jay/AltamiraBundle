@@ -84,20 +84,39 @@ class ScriptHandler
 
         recursiveAssetsOnlyCopy(getcwd(),__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot");
         // enable this to use flot minified code.
-        /*foreach ($files as $file) {
+        foreach ($files as $file) {
             if (substr($file,-3) == ".js") {
-                exec("java -jar ..".DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."extras".DIRECTORY_SEPARATOR."yuicompressor-2.4.2.jar $file -o "
+                // minification did not work out, so commented min code.
+                exec("java -jar ..".DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."extras".DIRECTORY_SEPARATOR."yuicompressor-2.4.2.jar --disable-optimizations $file -o "
                     .__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js");
+                
+
+                // straight copy to min.js for compatibility with min setting in altamira
+                //copy($file,__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js");
             }
-        }*/
+        }
+
+        echo "Compiling flot bubbles\n";
 
         chdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."libs".DIRECTORY_SEPARATOR."flot-bubbles");
+        if (($files = scandir(".")) ===false ) {
+            die("failed to traverse through flot bubbles directory");
+        }
         mkdir(__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot-bubbles",0777,true);
 
         recursiveAssetsOnlyCopy(getcwd(),__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot-bubbles");
-        /*exec("java -jar ..".DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."extras".DIRECTORY_SEPARATOR."yuicompressor-2.4.2.jar $file -o "
-            .__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot-bubbles".DIRECTORY_SEPARATOR.substr("jquery.flot.bubble.js",0,-2)."min.js");
-*/
+
+
+        foreach ($files as $file) {
+            if (substr($file,-3) == ".js") {
+                // minification did not work out, so commented min code.
+                //exec("java -jar ..".DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."extras".DIRECTORY_SEPARATOR."yuicompressor-2.4.2.jar $file -o "
+                //    .__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot-bubbles".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js");
+
+                // straight copy to min.js for compatibility with min setting in altamira
+                copy($file,__DIR__.DIRECTORY_SEPARATOR."Resources".DIRECTORY_SEPARATOR."public".DIRECTORY_SEPARATOR."js".DIRECTORY_SEPARATOR."flot-bubbles".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js");
+            }
+        }
         chdir($dir);
     }
 }
