@@ -97,7 +97,7 @@ class ScriptHandler
 
         echo "Installing jqplot\n";
         mkdir(static::getJSDir().DIRECTORY_SEPARATOR."jqplot",0777,true);
-        $source = static::getLibsDir().DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."dist";
+        $source = static::getLibsDir().DIRECTORY_SEPARATOR."jqplot".DIRECTORY_SEPARATOR."src";
         $dest= static::getJSDir().DIRECTORY_SEPARATOR."jqplot";
         recursiveAssetsOnlyCopy($source,$dest);
 
