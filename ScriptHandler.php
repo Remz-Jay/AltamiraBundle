@@ -56,6 +56,8 @@ class ScriptHandler
         ScriptHandler::cleanPublicJSDir();
 
 
+        // discovered that assetic can minify all the code - all not necessary anymore.
+        /*
         echo "Compiling jqplot\n";
         chdir(static::getLibsDir().DIRECTORY_SEPARATOR."jqplot");
         exec('ant clean min', $output, $status);
@@ -91,7 +93,7 @@ class ScriptHandler
                 // straight copy to min.js for compatibility with min setting in altamira
                 copy($flotBubblesLib.DIRECTORY_SEPARATOR.$file,static::getLibsDir().DIRECTORY_SEPARATOR."flot-bubbles".DIRECTORY_SEPARATOR.substr($file,0,-2)."min.js");
             }
-        }
+        }*/
 
         echo "Installing jqplot\n";
         mkdir(static::getJSDir().DIRECTORY_SEPARATOR."jqplot",0777,true);
