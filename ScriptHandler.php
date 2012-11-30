@@ -123,7 +123,7 @@ class ScriptHandler
             die("Running git submodule sync failed with $status\n");
         }
         exec('git submodule foreach git reset --hard', $output, $status);
-        exec('git submodule foreach git clean -df', $output, $status);
+        exec('git submodule foreach git clean -dxf', $output, $status);
 
         exec('git submodule update --init --recursive', $output, $status);
         chdir($dir);
